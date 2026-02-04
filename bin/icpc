@@ -2,22 +2,79 @@
 
 set -e
 
+CMD="$1"
+SUB="$2"
+ARG="$3"
+
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 RUNNER="$ROOT_DIR/run.sh"
 
-if [[ ! -f "$RUNNER" ]]; then
-    echo "❌ run.sh not found at $RUNNER"
+usage () {
+    echo "Usage:"
+    echo "  icpc run <YEAR> <PROBLEM|all>"
+    echo "  icpc run changed"
     exit 1
-fi
-
-CMD="$1"
-YEAR="$2"
-PROBLEM="$3"
+}
 
 if [[ "$CMD" != "run" ]]; then
-    echo "Usage:"
-    echo "  icpc run <year> <problem|all>"
-    exit 1
+    usage
 fi
 
-bash "$RUNNER" "$YEAR" "$PROBLEM"
+# -------------------------
+# icpc run changed
+# -------------------------
+if [[ "$SUB" == "changed" ]]; then
+    if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+        echo "Error: not inside a git repository"
+        exit 1
+    fi
+
+    TMP_LIST="$(mktemp)"
+
+    git status --porcelain \
+    | sed 's/^...//' \
+    | grep -E '^[^/]+/[^/]+/(solution\.(cpp|py|c|java)|input/|output/)' \
+    | grep -v '/test_output/' \
+    | while IFS= read -r F; do
+        YEAR="$(cut -d/ -f1 <<< "$F")"
+        PROB="$(cut -d/ -f2 <<< "$F")"
+        echo "$YEAR/$PROB"
+    done \
+    | sort -u > "$TMP_LIST"
+
+    if [[ ! -s "$TMP_LIST" ]]; then
+        echo "No modified problems detected."
+        rm -f "$TMP_LIST"
+        exit 0
+    fi
+
+    echo "Modified problems:"
+    while IFS= read -r KEY; do
+        YEAR="${KEY%%/*}"
+        PROB="${KEY##*/}"
+        echo "  - $YEAR / $PROB"
+    done < "$TMP_LIST"
+
+    echo
+    echo "Running modified problems..."
+    echo
+
+    while IFS= read -r KEY; do
+        YEAR="${KEY%%/*}"
+        PROB="${KEY##*/}"
+        bash "$RUNNER" "$YEAR" "$PROB"
+        echo
+    done < "$TMP_LIST"
+
+    rm -f "$TMP_LIST"
+    exit 0
+fi
+
+# -------------------------
+# icpc run YEAR X
+# -------------------------
+if [[ -z "$SUB" || -z "$ARG" ]]; then
+    usage
+fi
+
+bash "$RUNNER" "$SUB" "$ARG"
