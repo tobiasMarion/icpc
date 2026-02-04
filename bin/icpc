@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+
+set -e
+
+ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+RUNNER="$ROOT_DIR/run.sh"
+
+if [[ ! -f "$RUNNER" ]]; then
+    echo "❌ run.sh not found at $RUNNER"
+    exit 1
+fi
+
+CMD="$1"
+YEAR="$2"
+PROBLEM="$3"
+
+if [[ "$CMD" != "run" ]]; then
+    echo "Usage:"
+    echo "  icpc run <year> <problem|all>"
+    exit 1
+fi
+
+bash "$RUNNER" "$YEAR" "$PROBLEM"
