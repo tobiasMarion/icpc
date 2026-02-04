@@ -1,80 +1,47 @@
 #!/usr/bin/env bash
 
-set -e
-
-CMD="$1"
-SUB="$2"
-ARG="$3"
-
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 RUNNER="$ROOT_DIR/run.sh"
 
-usage () {
-    echo "Usage:"
-    echo "  icpc run <YEAR> <PROBLEM|all>"
-    echo "  icpc run changed"
+if [ "$1" != "run" ]; then
+    echo "Usage: icpc run <YEAR> <PROBLEM|all> OR icpc run changed"
     exit 1
-}
-
-if [[ "$CMD" != "run" ]]; then
-    usage
 fi
 
-# -------------------------
-# icpc run changed
-# -------------------------
-if [[ "$SUB" == "changed" ]]; then
-    if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-        echo "Error: not inside a git repository"
-        exit 1
-    fi
+if [ "$2" = "changed" ]; then
+    TMP_LIST=$(mktemp)
 
-    TMP_LIST="$(mktemp)"
+    # Pega arquivos modificados ou novos, ignorando deletados (D) 
+    # NF>=3 garante profundidade mínima de pasta 
+    git status --porcelain | grep -v "^ D" | awk '{print $NF}' | while read -r F; do
+        DIR=$(echo "$F" | cut -d/ -f1,2)
+        if [ -f "$DIR/solution.cpp" ] || [ -f "$DIR/solution.py" ]; then
+            echo "$DIR" >> "$TMP_LIST"
+        fi
+    done
 
-    git status --porcelain \
-    | sed 's/^...//' \
-    | grep -E '^[^/]+/[^/]+/(solution\.(cpp|py|c|java)|input/|output/)' \
-    | grep -v '/test_output/' \
-    | while IFS= read -r F; do
-        YEAR="$(cut -d/ -f1 <<< "$F")"
-        PROB="$(cut -d/ -f2 <<< "$F")"
-        echo "$YEAR/$PROB"
-    done \
-    | sort -u > "$TMP_LIST"
-
-    if [[ ! -s "$TMP_LIST" ]]; then
-        echo "No modified problems detected."
+    if [ ! -s "$TMP_LIST" ]; then
+        echo "Nenhuma modificação válida detectada."
         rm -f "$TMP_LIST"
         exit 0
     fi
 
-    echo "Modified problems:"
-    while IFS= read -r KEY; do
-        YEAR="${KEY%%/*}"
-        PROB="${KEY##*/}"
-        echo "  - $YEAR / $PROB"
-    done < "$TMP_LIST"
+    sort -u "$TMP_LIST" > "${TMP_LIST}.uniq"
+    echo "Problemas detectados:"
+    sed 's/^/  - /' "${TMP_LIST}.uniq"
+    echo ""
 
-    echo
-    echo "Running modified problems..."
-    echo
+    while read -r LINE; do
+        Y="${LINE%/*}"
+        P="${LINE#*/}"
+        bash "$RUNNER" "$Y" "$P"
+    done < "${TMP_LIST}.uniq"
 
-    while IFS= read -r KEY; do
-        YEAR="${KEY%%/*}"
-        PROB="${KEY##*/}"
-        bash "$RUNNER" "$YEAR" "$PROB"
-        echo
-    done < "$TMP_LIST"
-
-    rm -f "$TMP_LIST"
-    exit 0
+    rm -f "$TMP_LIST" "${TMP_LIST}.uniq"
+else
+    if [ -z "$2" ] || [ -z "$3" ]; then
+        echo "Usage: icpc run <YEAR> <PROBLEM|all>"
+        exit 1
+    fi
+    bash "$RUNNER" "$2" "$3"
 fi
-
-# -------------------------
-# icpc run YEAR X
-# -------------------------
-if [[ -z "$SUB" || -z "$ARG" ]]; then
-    usage
-fi
-
-bash "$RUNNER" "$SUB" "$ARG"
