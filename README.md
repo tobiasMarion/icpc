@@ -95,7 +95,7 @@ Suggested fields:
 
 | Year | Problem | Algorithm | Complexity | Notes |
 |-----:|:-------:|-----------|------------|-------|
-| 2025 | A | | | |
+| 2025 | A | Math | O(n) | |
 | 2025 | B | | | |
 | 2025 | C | | | |
 | 2025 | D | | | |
