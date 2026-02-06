@@ -102,7 +102,7 @@ Status:
 |-----:|:-------:|:------:|-----------|:----------:|-------|
 | 2025 | A | ✅ | Math | O(n * m) | |
 | 2025 | B | ⌛️ | | | Simulate shuffles isn't fast enough|
-| 2025 | C | | | | |
+| 2025 | C | ✅ | Bit Manipulation | | The degree of the polynomial (<= 20) allows us to use only bitwise operations on an integer. |
 | 2025 | D | | | | |
 | 2025 | E | | | | |
 | 2025 | F | | | | |
