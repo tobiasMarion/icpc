@@ -134,7 +134,7 @@ Difficulty Legend
 | 2024 | L |    | 21%  | 🟡 |    |    | |
 | 2023 | B |    | 45%  | 🟢 |    |    | |
 | 2023 | C |    | 11%  | 🟠 |    |    | |
-| 2023 | D |    | 62%  | ⭐ |    |    | |
+| 2023 | D | ⌛️ | 62%  | 🟠 | Dijkstra | m * (m log n)   | Run Dijkstra to each removed edge isn't fast enough |
 | 2023 | F |    | 28%  | 🟡 |    |    | |
 | 2023 | G |    | 12%  | 🟠 |    |    | |
 | 2023 | H |    | 16%  | 🟡 |    |    | |
