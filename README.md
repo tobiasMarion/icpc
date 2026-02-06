@@ -105,7 +105,7 @@ Difficulty Legend
 - 🟠 Hard (5%  — 14% )
 - 🔴 Super Har (< 5% )
 
-| Year | Problem | Status | %  Sucesso | Difficulty | Algorithm| Complexity | Notes |
+| Year | Problem | Status | %Success | Difficulty | Algorithm| Complexity | Notes |
 |:----:|:-------:|:------:|:----------:|:----------:|:---------|:----------:|:------|
 | 2025 | A | ✅ | 75%   | ⭐ | Math | O(n * m) | |
 | 2025 | B | ⌛️ | 1%    | 🔴 |    |    | Simulate shuffles isn't fast enough |
