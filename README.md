@@ -108,7 +108,7 @@ Difficulty Legend
 | Year | Problem | Status | %Success | Difficulty | Algorithm| Complexity | Notes |
 |:----:|:-------:|:------:|:----------:|:----------:|:---------|:----------:|:------|
 | 2025 | A | ✅ | 75%   | ⭐ | Math | O(n * m) | |
-| 2025 | B | ⌛️ | 1%    | 🔴 |    |    | Simulate shuffles isn't fast enough |
+| 2025 | B | ⌛️ | 1%    | 🔴 |    |    | Simulating shuffles isn't fast enough |
 | 2025 | C | ✅ | 67%   | ⭐ | Bit Manipulation |    | The degree of the polynomial (<= 20) allows us to use only bitwise operations on an integer. |
 | 2025 | D |    | 23%  | 🟡 |    |    | |
 | 2025 | E |    | 1%   | 🔴 |    |    | |
