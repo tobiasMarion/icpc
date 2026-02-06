@@ -12,7 +12,10 @@ has_newline () {
 
 run_problem() {
     local BASE="$YEAR/$1"
-    [[ -d "$BASE/input" && -d "$BASE/output" ]] || return
+    
+    if [ "$INTERACTIVE_MODE" != "1" ]; then
+        [[ -d "$BASE/input" && -d "$BASE/output" ]] || return
+    fi
 
     local EXEC=""
     local BIN="$BASE/solution_bin"
@@ -41,6 +44,15 @@ run_problem() {
     fi
 
     [ -n "$EXEC" ] || return
+
+    if [ "$INTERACTIVE_MODE" = "1" ]; then
+        echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+        echo -e "${CYAN} Debugging $YEAR / $1 (Manual Input)${NC}"
+        echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+        $EXEC
+        rm -f "$BIN"
+        return
+    fi
 
     echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
     echo -e "${CYAN} Running $YEAR / $1${NC}"

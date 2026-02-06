@@ -13,13 +13,53 @@ else
     exit 1
 fi
 
+# Help command
+if [[ "$1" == "--help" || "$1" == "-h" ]]; then
+    echo "Usage: icpc <command>"
+    echo ""
+    echo "Commands:"
+    echo "  run <year> <problem>  Run a specific problem"
+    echo "  run <year> all        Run all problems for a year"
+    echo "  run changed           Run only problems with git changes"
+    echo "  debug                 Manual input mode for the current problem"
+    echo "  --help, -h            Show this help message"
+    exit 0
+fi
+
+# New debug command logic
+if [ "$1" = "debug" ]; then
+    if ! git rev-parse --git-dir > /dev/null 2>&1; then
+        echo "Error: not in a git repository!"
+        exit 1
+    fi
+
+    # Detects alphanumeric directory names (like TEST or 2025)
+    DIR=$(git status --porcelain -uall | grep -v "^ D" | awk '{print $NF}' | while read -r F; do
+        if [[ "$F" =~ ^[^/]+/[^/]+/(solution\.(cpp|py)|input/|output/) ]]; then
+            echo "$F" | cut -d/ -f1,2
+            break
+        fi
+    done)
+
+    if [ -z "$DIR" ]; then
+        echo "Error: No valid changes detected."
+        exit 1
+    fi
+
+    Y="${DIR%/*}"
+    P="${DIR#*/}"
+    
+    export INTERACTIVE_MODE=1
+    bash "$RUNNER" "$Y" "$P"
+    exit 0
+fi
+
 if [ "$1" != "run" ]; then
-    echo "Usage: icpc run <YEAR> <PROBLEM|all> OR icpc run changed"
+    echo "Usage: icpc run <YEAR> <PROBLEM|all> OR icpc run changed OR icpc debug"
     exit 1
 fi
 
 if [ "$2" = "changed" ]; then
-    # Check if we're in a git repository
     if ! git rev-parse --git-dir > /dev/null 2>&1; then
         echo "Error: not in a git repository!"
         exit 1
@@ -27,13 +67,10 @@ if [ "$2" = "changed" ]; then
 
     TMP_LIST=$(mktemp)
 
-    # Detect modified AND untracked files that are solutions or inputs/outputs
-    # Using -uall to include untracked files
+    # Detect modified AND untracked files
     git status --porcelain -uall | grep -v "^ D" | awk '{print $NF}' | while read -r F; do
-        # Check if file matches pattern YEAR/PROBLEM/
-        if [[ "$F" =~ ^[0-9]{4}/[^/]+/(solution\.(cpp|py)|input/|output/) ]]; then
+        if [[ "$F" =~ ^[^/]+/[^/]+/(solution\.(cpp|py)|input/|output/) ]]; then
             DIR=$(echo "$F" | cut -d/ -f1,2)
-            # Check if a solution file exists
             if [ -f "$DIR/solution.cpp" ] || [ -f "$DIR/solution.py" ]; then
                 echo "$DIR" >> "$TMP_LIST"
             fi
