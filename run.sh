@@ -14,12 +14,10 @@ get_time_limit() {
         if [ ! -x "$prob_limit_file" ]; then
             chmod +x "$prob_limit_file"
         fi
-        
         "$prob_limit_file" | head -n 1
     else
-        # Log em amarelo apenas se o arquivo realmente não existir
-        echo -e "${YELLOW}Warning: Limit file '$prob_limit_file' not found. Using fallback.${NC}" >&2
-        echo 2 # Fallback de segurança
+        echo -e "${YELLOW}Warning: Limit file '$prob_limit_file' not found. Using fallback 2s.${NC}" >&2
+        echo 2 
     fi
 }
 
@@ -37,12 +35,13 @@ run_problem() {
     local EXEC=""
     local BIN="$BASE/solution_bin"
     local CURRENT_LIMIT=2
+    local LANG_LABEL=""
 
     rm -f "$BIN"
 
     if [ -f "$BASE/solution.cpp" ]; then
         CURRENT_LIMIT=$(get_time_limit "$BASE" "cpp")
-        
+        LANG_LABEL="cpp"
         if command -v g++-15 &> /dev/null; then
             COMPILER="g++-15"
         else
@@ -58,6 +57,7 @@ run_problem() {
         fi
     elif [ -f "$BASE/solution.py" ]; then
         CURRENT_LIMIT=$(get_time_limit "$BASE" "py3")
+        LANG_LABEL="python"
         EXEC="python3 $BASE/solution.py"
     else
         echo -e "${YELLOW}No solution file found${NC} in $BASE"
@@ -81,7 +81,9 @@ run_problem() {
     echo -e "${CYAN} Limit: ${CURRENT_LIMIT}s${NC}"
     echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 
-    AC=0; WA=0; TLE=0; mkdir -p "$BASE/test_output"
+    AC=0; WA=0; TLE=0; 
+    FAILED_JSON_ITEMS="" 
+    mkdir -p "$BASE/test_output"
 
     for IN in "$BASE/input"/*; do
         [ -f "$IN" ] || continue
@@ -91,21 +93,49 @@ run_problem() {
         [ -f "$EXP" ] || continue
 
         if ! timeout "${CURRENT_LIMIT}s" bash -c "$EXEC < '$IN' > '$OUT'" 2>/dev/null; then
-            echo -e "${YELLOW}⧗ TLE${NC} $T (${CURRENT_LIMIT}s)"; ((TLE++)); continue
+            echo -e "${YELLOW}⧗ TLE${NC} $T (${CURRENT_LIMIT}s)"
+            ((TLE++))
+            FAILED_JSON_ITEMS+="{\"test\": \"$T\", \"type\": \"TLE\"},"
+            continue
         fi
 
         if diff -q "$EXP" "$OUT" >/dev/null 2>&1; then
-            echo -e "${GREEN}✔ AC${NC} $T"; ((AC++))
+            echo -e "${GREEN}✔ AC${NC} $T"
+            ((AC++))
         else
             echo -e "${RED}✘ WA${NC} $T"
+            ((WA++))
+            FAILED_JSON_ITEMS+="{\"test\": \"$T\", \"type\": \"WA\"},"
+            
             iv=$(head -n 1 "$IN" | tr -d '\n\r'); [ "$(has_newline "$IN")" -eq 1 ] && iv+="↵" || iv+="∅"
             ev=$(head -n 1 "$EXP" | tr -d '\n\r'); [ "$(has_newline "$EXP")" -eq 1 ] && ev+="↵" || ev+="∅"
             ov=$(head -n 1 "$OUT" | tr -d '\n\r'); [ "$(has_newline "$OUT")" -eq 1 ] && ov+="↵" || ov+="∅"
             echo -e "  ${GRAY}in:${NC}$iv | ${GRAY}exp:${NC}$ev | ${GRAY}out:${NC}$ov\n"
-            ((WA++))
         fi
     done
-    echo -e "Summary: AC=$AC WA=$WA TLE=$TLE\n"
+
+    JSON_FILE="$BASE/last_run.json"
+    CLEAN_FAILED_JSON=$(echo "${FAILED_JSON_ITEMS%?}")
+
+    cat <<EOF > "$JSON_FILE"
+{
+    "timestamp": "$(date '+%Y-%m-%dT%H:%M:%S')",
+    "problem": "$1",
+    "year": "$YEAR",
+    "language": "$LANG_LABEL",
+    "limit_seconds": $CURRENT_LIMIT,
+    "results": {
+        "ac": $AC,
+        "wa": $WA,
+        "tle": $TLE,
+        "total": $((AC + WA + TLE))
+    },
+    "failed_tests": [ $CLEAN_FAILED_JSON ]
+}
+EOF
+
+    echo -e "Summary: AC=$AC WA=$WA TLE=$TLE"
+    echo -e "${GRAY}Results saved to: $JSON_FILE${NC}\n"
     
     rm -f "$BIN"
 }
