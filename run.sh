@@ -2,9 +2,26 @@
 
 YEAR="$1"
 TARGET="$2"
-TIME_LIMIT=2
 
 RED="\033[0;31m"; GREEN="\033[0;32m"; YELLOW="\033[1;33m"; CYAN="\033[0;36m"; GRAY="\033[0;90m"; NC="\033[0m"
+
+get_time_limit() {
+    local base_path="$1"
+    local ext="$2"
+    local prob_limit_file="$base_path/limits/$ext"
+    
+    if [ -f "$prob_limit_file" ]; then
+        if [ ! -x "$prob_limit_file" ]; then
+            chmod +x "$prob_limit_file"
+        fi
+        
+        "$prob_limit_file" | head -n 1
+    else
+        # Log em amarelo apenas se o arquivo realmente não existir
+        echo -e "${YELLOW}Warning: Limit file '$prob_limit_file' not found. Using fallback.${NC}" >&2
+        echo 2 # Fallback de segurança
+    fi
+}
 
 has_newline () {
     tail -c 1 "$1" | wc -l | tr -d ' '
@@ -19,10 +36,13 @@ run_problem() {
 
     local EXEC=""
     local BIN="$BASE/solution_bin"
+    local CURRENT_LIMIT=2
 
     rm -f "$BIN"
 
     if [ -f "$BASE/solution.cpp" ]; then
+        CURRENT_LIMIT=$(get_time_limit "$BASE" "cpp")
+        
         if command -v g++-15 &> /dev/null; then
             COMPILER="g++-15"
         else
@@ -37,6 +57,7 @@ run_problem() {
             return
         fi
     elif [ -f "$BASE/solution.py" ]; then
+        CURRENT_LIMIT=$(get_time_limit "$BASE" "py3")
         EXEC="python3 $BASE/solution.py"
     else
         echo -e "${YELLOW}No solution file found${NC} in $BASE"
@@ -48,6 +69,7 @@ run_problem() {
     if [ "$INTERACTIVE_MODE" = "1" ]; then
         echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
         echo -e "${CYAN} Debugging $YEAR / $1 (Manual Input)${NC}"
+        echo -e "${CYAN} Mode: Unlimited Time${NC}"
         echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
         $EXEC
         rm -f "$BIN"
@@ -56,6 +78,7 @@ run_problem() {
 
     echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
     echo -e "${CYAN} Running $YEAR / $1${NC}"
+    echo -e "${CYAN} Limit: ${CURRENT_LIMIT}s${NC}"
     echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 
     AC=0; WA=0; TLE=0; mkdir -p "$BASE/test_output"
@@ -67,8 +90,8 @@ run_problem() {
         OUT="$BASE/test_output/$T"
         [ -f "$EXP" ] || continue
 
-        if ! timeout "$TIME_LIMIT" bash -c "$EXEC < '$IN' > '$OUT'" 2>/dev/null; then
-            echo -e "${YELLOW}⧗ TLE${NC} $T"; ((TLE++)); continue
+        if ! timeout "${CURRENT_LIMIT}s" bash -c "$EXEC < '$IN' > '$OUT'" 2>/dev/null; then
+            echo -e "${YELLOW}⧗ TLE${NC} $T (${CURRENT_LIMIT}s)"; ((TLE++)); continue
         fi
 
         if diff -q "$EXP" "$OUT" >/dev/null 2>&1; then
