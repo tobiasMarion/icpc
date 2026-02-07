@@ -156,7 +156,7 @@ This classification is intended for study prioritization rather than absolute di
 | 2022 | B |    | 🔴 ||||
 | 2022 | C |    | 🟠 ||||
 | 2022 | D |    | 🟢 ||||
-| 2022 | E |    | 🔵 ||||
+| 2022 | E | ✅ | 🔵 || O(n) ||
 | 2022 | F |    | 🟡 ||||
 | 2022 | G |    | 🔴 ||||
 | 2022 | H |    | 🟠 ||||
