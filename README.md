@@ -176,7 +176,7 @@ This classification is intended for study prioritization rather than absolute di
 | 2021 | H |    | 🟢 ||||
 | 2021 | I |    | 🔴 ||||
 | 2021 | J |    | 🔴 ||||
-| 2021 | K |    | 🔵 ||||
+| 2021 | K | ✅ | 🔵 || O(n) ||
 | 2021 | L |    | 🟠 ||||
 | 2021 | M |    | 🟡 ||||
 | 2021 | N |    | 🟢 ||||
