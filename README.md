@@ -106,7 +106,7 @@ Difficulty Legend
 - 🔴 Super Har (< 5% )
 
 | Year | Problem | Status | Difficulty | Algorithm | Complexity | Notes |
-|:----:|:-------:|:------:|:-----------|:----------|:----------:|:------|
+|:----:|:-------:|:------:|:----------:|:----------|:----------:|:------|
 | 2025 | A | ✅ | ⭐ | Math | O(n * m) |  |
 | 2025 | B | ⌛️ | 🔴 |  |  | Simulating shuffles isn't fast enough |
 | 2025 | C | ✅ | ⭐ | Bit Manipulation |  | The degree of the polynomial (<= 20) allows us to use only bitwise operations on an integer. |
