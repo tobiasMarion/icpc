@@ -93,46 +93,53 @@ Suggested fields:
 
 ## Resolution Table
 
-Status:
+### Status:
 - ✅ Passed
 - ⌛️ Time Limit
 - 🛑 Wrong Answer
 
-Difficulty Legend
-- ⭐ Very Easy (≥ 50% )
-- 🟢 Easy (30%  — 49% )
-- 🟡 Medium (15%  — 29% )
-- 🟠 Hard (5%  — 14% )
-- 🔴 Super Har (< 5% )
+### Difficulty Legend
 
+Problem difficulty is computed using a Composite Difficulty Score (CDS) based on official contest statistics.
+The score combines a smoothed acceptance rate with a log-normalized submission volume (per year), giving more weight to problems that are both widely attempted and frequently solved.
+
+Problems are then ranked by this score and divided into five quantiles within the dataset:
+
+- 🔵 Super Easy
+- 🟢 Easy
+- 🟡 Medium
+- 🟠 Hard
+- 🔴 Super Hard
+
+This classification is intended for study prioritization rather than absolute difficulty measurement.
 | Year | Problem | Status | Difficulty | Algorithm | Complexity | Notes |
 |:----:|:-------:|:------:|:----------:|:----------|:----------:|:------|
-| 2025 | A | ✅ | ⭐ | Math | O(n * m) |  |
+| 2025 | A | ✅ | 🔵 | Math | O(n * m) |  |
 | 2025 | B | ⌛️ | 🔴 |  |  | Simulating shuffles isn't fast enough |
-| 2025 | C | ✅ | ⭐ | Bit Manipulation |  | The degree of the polynomial (<= 20) allows us to use only bitwise operations on an integer. |
+| 2025 | C | ✅ | 🔵 | Bit Manipulation |  | The degree of the polynomial (<= 20) allows us to use only bitwise operations on an integer. |
 | 2025 | D |  | 🟡 |  |  |  |
 | 2025 | E |  | 🔴 |  |  |  |
-| 2025 | F |  | ⭐ |  |  |  |
+| 2025 | F |  | 🔵 |  |  |  |
 | 2025 | G |  | 🟠 |  |  |  |
 | 2025 | H |  | 🟡 |  |  |  |
 | 2025 | I |  | 🟡 |  |  |  |
-| 2025 | J | ✅ | ⭐ |  | O(1) | O(1) because it's always 10 inputs |
+| 2025 | J | ✅ | 🔵 |  | O(1) | O(1) because it's always 10 inputs |
 | 2025 | K |  | 🔴 |  |  |  |
 | 2025 | L |  | 🟢 |  |  |  |
 | 2025 | M |  | 🟡 |  |  |  |
-| 2024 | A |  | ⭐ |  |  |  |
+| 2024 | A |  | 🔵 |  |  |  |
 | 2024 | B |  | 🟡 |  |  |  |
 | 2024 | C |  | 🟠 |  |  |  |
 | 2024 | D |  | 🟡 |  |  |  |
-| 2024 | E | ✅ | ⭐ |  | O(n<sup>2</sup>) |  |
-| 2024 | F | ✅ | ⭐ | Fibonacci | O(n) |  |
+| 2024 | E | ✅ | 🔵 |  | O(n<sup>2</sup>) |  |
+| 2024 | F | ✅ | 🔵 | Fibonacci | O(n) |  |
 | 2024 | G |  | 🔴 |  |  |  |
 | 2024 | H |  | 🟡 |  |  |  |
 | 2024 | I |  | 🟠 |  |  |  |
 | 2024 | J |  | 🔴 |  |  |  |
 | 2024 | K |  | 🟡 |  |  |  |
 | 2024 | L |  | 🟢 |  |  |  |
-| 2023 | A |  | ⭐ |  |  |  |
+| 2023 | A |  | 🔵 |  |  |  |
 | 2023 | B |  | 🟡 |  |  |  |
 | 2023 | C |  | 🟢 |  |  |  |
 | 2023 | D | ⌛️ | 🔴 | Dijkstra | m * (m log n) | Run Dijkstra to each removed edge isn't fast enough |
@@ -144,16 +151,16 @@ Difficulty Legend
 | 2023 | J |  | 🟠 |  |  |  |
 | 2023 | K |  | 🟠 |  |  |  |
 | 2023 | L |  | 🟢 |  |  |  |
-| 2023 | M |  | ⭐ |  |  |  |
-| 2023 | A |  | ⭐ |  |  |  |
-| 2022 | B |  | ⭐ |  |  |  |
+| 2023 | M |  | 🔵 |  |  |  |
+| 2023 | A |  | 🔵 |  |  |  |
+| 2022 | B |  | 🔵 |  |  |  |
 | 2022 | C |  | 🟢 |  |  |  |
 | 2022 | D |  | 🟢 |  |  |  |
 | 2022 | E |  | 🟡 |  |  |  |
 | 2022 | F |  | 🟢 |  |  |  |
 | 2022 | G |  | 🟠 |  |  |  |
 | 2022 | H |  | 🟢 |  |  |  |
-| 2022 | I |  | ⭐ |  |  |  |
+| 2022 | I |  | 🔵 |  |  |  |
 | 2022 | J |  | 🟢 |  |  |  |
 | 2022 | K |  | 🟠 |  |  |  |
 | 2022 | L |  | 🟡 |  |  |  |
@@ -174,17 +181,17 @@ Difficulty Legend
 | 2021 | M |  | 🟢 |  |  |  |
 | 2021 | N |  | 🟡 |  |  |  |
 | 2020 | A |  | 🟠 |  |  |  |
-| 2020 | B |  | ⭐ |  |  |  |
+| 2020 | B |  | 🔵 |  |  |  |
 | 2020 | C |  | 🔴 |  |  |  |
 | 2020 | D |  | 🟠 |  |  |  |
 | 2020 | E |  | 🟠 |  |  |  |
-| 2020 | F |  | ⭐ |  |  |  |
-| 2020 | G |  | ⭐ |  |  |  |
+| 2020 | F |  | 🔵 |  |  |  |
+| 2020 | G |  | 🔵 |  |  |  |
 | 2020 | H |  | 🟠 |  |  |  |
 | 2020 | I |  | 🔴 |  |  |  |
 | 2020 | J |  | 🟠 |  |  |  |
 | 2020 | K |  | 🔴 |  |  |  |
-| 2020 | L |  | ⭐ |  |  |  |
+| 2020 | L |  | 🔵 |  |  |  |
 | 2020 | M |  | 🔴 |  |  |  |
 | 2020 | N |  | 🟡 |  |  |  |
 | 2020 | O |  | 🔴 |  |  |  |
