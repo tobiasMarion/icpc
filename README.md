@@ -152,7 +152,7 @@ This classification is intended for study prioritization rather than absolute di
 | 2023 | K |    | 🔴 ||||
 | 2023 | L |    | 🟢 ||||
 | 2023 | M |    | 🟡 ||||
-| 2023 | A |    | 🔵 ||||
+| 2022 | A | ✅ | 🔵 || O(n) ||
 | 2022 | B |    | 🔴 ||||
 | 2022 | C |    | 🟠 ||||
 | 2022 | D |    | 🟢 ||||
