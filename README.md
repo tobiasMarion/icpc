@@ -142,7 +142,7 @@ This classification is intended for study prioritization rather than absolute di
 | 2023 | A |  | 🔵 |  |  |  |
 | 2023 | B |  | 🟡 |  |  |  |
 | 2023 | C |  | 🟢 |  |  |  |
-| 2023 | D | ⌛️ | 🔴 | Dijkstra | m * (m log n) | Run Dijkstra to each removed edge isn't fast enough |
+| 2023 | D | ⌛️ | 🔴 | Dijkstra |  O(m<sup>2</sup> log n) | Run Dijkstra to each removed edge isn't fast enough |
 | 2023 | E |  | 🟠 |  |  |  |
 | 2023 | F |  | 🟢 |  |  |  |
 | 2023 | G |  | 🟡 |  |  |  |
