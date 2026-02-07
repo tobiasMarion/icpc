@@ -160,7 +160,7 @@ This classification is intended for study prioritization rather than absolute di
 | 2022 | F |    | 🟡 ||||
 | 2022 | G |    | 🔴 ||||
 | 2022 | H |    | 🟠 ||||
-| 2022 | I |    | 🔵 ||||
+| 2022 | I | ✅ | 🔵 || O(1) ||
 | 2022 | J |    | 🟢 ||||
 | 2022 | K |    | 🔴 ||||
 | 2022 | L |    | 🟠 ||||
