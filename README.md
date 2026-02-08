@@ -181,7 +181,7 @@ This classification is intended for study prioritization rather than absolute di
 | 2021 | M |    | 🟡 ||||
 | 2021 | N |    | 🟢 ||||
 | 2020 | A |    | 🟡 ||||
-| 2020 | B |    | 🔵 ||||
+| 2020 | B | ✅ | 🔵 || O(n) ||
 | 2020 | C |    | 🟡 ||||
 | 2020 | D |    | 🔴 ||||
 | 2020 | E |    | 🟡 ||||
