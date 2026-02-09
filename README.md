@@ -114,7 +114,7 @@ Problems are then ranked by this score and divided into five quantiles within th
 This classification is intended for study prioritization rather than absolute difficulty measurement.
 | Year | Problem | Status | Difficulty | Algorithm | Complexity | Notes |
 |:----:|:-------:|:------:|:----------:|:----------|:----------:|:------|
-| 2025 | A | ✅ | 🔵 | Math | O(n * m) |    |
+| 2025 | A | ✅ | 🔵 | Math | O(n * m) ||
 | 2025 | B | ⌛️ | 🟠 ||| Simulating shuffles isn't fast enough  |
 | 2025 | C | ✅ | 🔵 | Bit Manipulation || The degree of the polynomial (<= 20) allows us to use only bitwise operations on an integer. |
 | 2025 | D |    | 🟠 ||||
@@ -123,11 +123,11 @@ This classification is intended for study prioritization rather than absolute di
 | 2025 | G |    | 🔴 ||||
 | 2025 | H |    | 🟠 ||||
 | 2025 | I |    | 🟢 ||||
-| 2025 | J | ✅ | 🔵 || O(1) | O(1) because it's always 10 inputs|
+| 2025 | J | ✅ | 🔵 || O(1) ||
 | 2025 | K |    | 🟡 ||||
 | 2025 | L |    | 🟡 ||||
 | 2025 | M |    | 🔵 ||||
-| 2024 | A |    | 🔵 ||||
+| 2024 | A | ✅ | 🔵 | Math | O(1) ||
 | 2024 | B |    | 🟡 ||||
 | 2024 | C |    | 🟠 ||||
 | 2024 | D |    | 🔴 ||||
