@@ -134,7 +134,7 @@ This classification is intended for study prioritization rather than absolute di
 | 2024 | E | ✅ | 🔵 || O(n<sup>2</sup>) |    |
 | 2024 | F | ✅ | 🔵 | Fibonacci  | O(n) |    |
 | 2024 | G |    | 🟠 ||||
-| 2024 | H |    | 🟢 ||||
+| 2024 | H | ✅ | 🟢 ||||
 | 2024 | I |    | 🟢 ||||
 | 2024 | J |    | 🔴 ||||
 | 2024 | K |    | 🟢 ||||
