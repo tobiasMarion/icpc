@@ -19,10 +19,10 @@ icpc/
 ├── run.sh  # Test execution script
 ├── 2020/
 │   └── A/
-│ ├── input/# Official inputs
-│ ├── output/# Official outputs
-│ ├── test_output/# Local outputs (ignored by git)
-│ └── solution.py # Your solution
+│       ├── input/# Official inputs
+│       ├── output/# Official outputs
+│       ├── test_output/# Local outputs (ignored by git)
+│       └── solution.py # Your solution
 └── .gitignore
 ```
 
