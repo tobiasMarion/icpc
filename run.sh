@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-YEAR="$1"
+GROUP="$1"
 TARGET="$2"
 
 RED="\033[0;31m"; GREEN="\033[0;32m"; YELLOW="\033[1;33m"; CYAN="\033[0;36m"; GRAY="\033[0;90m"; NC="\033[0m"
@@ -9,15 +9,27 @@ get_time_limit() {
     local base_path="$1"
     local ext="$2"
     local prob_limit_file="$base_path/limits/$ext"
-    
-    if [ -f "$prob_limit_file" ]; then
-        if [ ! -x "$prob_limit_file" ]; then
-            chmod +x "$prob_limit_file"
+    local limit_file=""
+    local dir="$base_path"
+
+    # Per-problem limits take precedence, then we walk up the tree, so a whole
+    # judge or contest year can share a single definition (e.g. cses/limits/py3)
+    while [ -n "$dir" ] && [ "$dir" != "." ] && [ "$dir" != "/" ]; do
+        if [ -f "$dir/limits/$ext" ]; then
+            limit_file="$dir/limits/$ext"
+            break
         fi
-        "$prob_limit_file" | head -n 1
+        dir=$(dirname "$dir")
+    done
+
+    if [ -n "$limit_file" ]; then
+        if [ ! -x "$limit_file" ]; then
+            chmod +x "$limit_file"
+        fi
+        "$limit_file" | head -n 1
     else
         echo -e "${YELLOW}Warning: Limit file '$prob_limit_file' not found. Using fallback 2s.${NC}" >&2
-        echo 2 
+        echo 2
     fi
 }
 
@@ -25,8 +37,22 @@ has_newline () {
     tail -c 1 "$1" | wc -l | tr -d ' '
 }
 
+# Judges ignore trailing whitespace and a missing final newline, and the
+# official CSES outputs do end every line with a space, so we compare the
+# files normalized instead of byte by byte
+outputs_match() {
+    diff -q <(sed -e 's/[[:space:]]*$//' "$1") <(sed -e 's/[[:space:]]*$//' "$2") > /dev/null 2>&1
+}
+
+# Our own output should still be clean: a judge that checks formatting strictly
+# (BOCA reports it as an output format error) would reject the trailing spaces
+# the comparison above forgives
+has_trailing_space() {
+    grep -qE '[[:space:]]+$' "$1"
+}
+
 run_problem() {
-    local BASE="$YEAR/$1"
+    local BASE="$GROUP/$1"
     
     if [ "$INTERACTIVE_MODE" != "1" ]; then
         [[ -d "$BASE/input" && -d "$BASE/output" ]] || return
@@ -55,6 +81,22 @@ run_problem() {
             cat /tmp/icpc_compile_err
             return
         fi
+    elif [ -f "$BASE/solution.c" ]; then
+        CURRENT_LIMIT=$(get_time_limit "$BASE" "c")
+        LANG_LABEL="c"
+        if command -v gcc-15 &> /dev/null; then
+            COMPILER="gcc-15"
+        else
+            COMPILER="gcc"
+        fi
+
+        if $COMPILER -std=gnu11 -O2 -Wall -Wextra "$BASE/solution.c" -o "$BIN" -lm 2>/tmp/icpc_compile_err; then
+            EXEC="./$BIN"
+        else
+            echo -e "${RED}Compilation Error${NC} in $BASE/solution.c"
+            cat /tmp/icpc_compile_err
+            return
+        fi
     elif [ -f "$BASE/solution.py" ]; then
         CURRENT_LIMIT=$(get_time_limit "$BASE" "py3")
         LANG_LABEL="python"
@@ -68,7 +110,7 @@ run_problem() {
 
     if [ "$INTERACTIVE_MODE" = "1" ]; then
         echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-        echo -e "${CYAN} Debugging $YEAR / $1 (Manual Input)${NC}"
+        echo -e "${CYAN} Debugging $GROUP / $1 (Manual Input)${NC}"
         echo -e "${CYAN} Mode: Unlimited Time${NC}"
         echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
         $EXEC
@@ -77,11 +119,11 @@ run_problem() {
     fi
 
     echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-    echo -e "${CYAN} Running $YEAR / $1${NC}"
+    echo -e "${CYAN} Running $GROUP / $1${NC}"
     echo -e "${CYAN} Limit: ${CURRENT_LIMIT}s${NC}"
     echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 
-    AC=0; WA=0; TLE=0; 
+    AC=0; WA=0; TLE=0; PE=0
     FAILED_JSON_ITEMS="" 
     mkdir -p "$BASE/test_output"
 
@@ -99,8 +141,13 @@ run_problem() {
             continue
         fi
 
-        if diff -q "$EXP" "$OUT" >/dev/null 2>&1; then
-            echo -e "${GREEN}✔ AC${NC} $T"
+        if outputs_match "$EXP" "$OUT"; then
+            if has_trailing_space "$OUT"; then
+                echo -e "${GREEN}✔ AC${NC} $T ${YELLOW}(your output has trailing whitespace)${NC}"
+                ((PE++))
+            else
+                echo -e "${GREEN}✔ AC${NC} $T"
+            fi
             ((AC++))
         else
             echo -e "${RED}✘ WA${NC} $T"
@@ -121,13 +168,14 @@ run_problem() {
 {
     "timestamp": "$(date '+%Y-%m-%dT%H:%M:%S')",
     "problem": "$1",
-    "year": "$YEAR",
+    "group": "$GROUP",
     "language": "$LANG_LABEL",
     "limit_seconds": $CURRENT_LIMIT,
     "results": {
         "ac": $AC,
         "wa": $WA,
         "tle": $TLE,
+        "trailing_whitespace": $PE,
         "total": $((AC + WA + TLE))
     },
     "failed_tests": [ $CLEAN_FAILED_JSON ]
@@ -135,13 +183,16 @@ run_problem() {
 EOF
 
     echo -e "Summary: AC=$AC WA=$WA TLE=$TLE"
+    if [ "$PE" -gt 0 ]; then
+        echo -e "${YELLOW}$PE test(s) passed only because trailing whitespace is ignored${NC}"
+    fi
     echo -e "${GRAY}Results saved to: $JSON_FILE${NC}\n"
     
     rm -f "$BIN"
 }
 
 if [ "$TARGET" = "all" ]; then
-    for d in "$YEAR"/*; do 
+    for d in "$GROUP"/*; do 
         if [ -d "$d" ]; then 
             run_problem "$(basename "$d")"
         fi

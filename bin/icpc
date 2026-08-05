@@ -13,30 +13,168 @@ else
     exit 1
 fi
 
+# Every path handled by the runner is relative to the repository root
+ROOT_DIR="$(cd "$(dirname "$RUNNER")" && pwd)"
+cd "$ROOT_DIR" || exit 1
+
+RED="\033[0;31m"; GREEN="\033[0;32m"; YELLOW="\033[1;33m"; CYAN="\033[0;36m"; GRAY="\033[0;90m"; NC="\033[0m"
+
+# Directories that hold no contest problems
+SKIP_DIRS="./bin ./TEST ./.git"
+
+# A problem is any directory holding a solution file, at any depth
+list_problems() {
+    local prune=""
+    for D in $SKIP_DIRS; do
+        prune="$prune -path $D -prune -o"
+    done
+    # shellcheck disable=SC2086
+    find . $prune -name "solution.*" -print 2>/dev/null |
+        sed 's|/solution\.[^/]*$||; s|^\./||' | sort -u
+}
+
+# Walks up from a path until it reaches the problem directory it belongs to
+problem_dir_of() {
+    local dir="$1"
+    while [ -n "$dir" ] && [ "$dir" != "." ] && [ "$dir" != "/" ]; do
+        if [ -f "$dir/solution.py" ] || [ -f "$dir/solution.cpp" ] || [ -f "$dir/solution.c" ]; then
+            echo "$dir"
+            return 0
+        fi
+        dir=$(dirname "$dir")
+    done
+    return 1
+}
+
+# Hands a problem path over to the runner, which takes group and problem apart
+run_problem_path() {
+    bash "$RUNNER" "$(dirname "$1")" "$(basename "$1")"
+}
+
+# Turns a tests.zip downloaded from CSES into input/ and output/ files
+extract_tests() {
+    local zip_path="$1"
+    local problem_dir
+    problem_dir=$(dirname "$zip_path")
+
+    if [ "$problem_dir" = "." ]; then
+        echo -e "${YELLOW}⚠ Skipping $zip_path${NC}"
+        echo -e "  ${GRAY}Move it into the problem directory first, then run extract again:${NC}"
+        echo -e "  ${GRAY}mv tests.zip cses/introductory/<problem>/${NC}"
+        return 1
+    fi
+
+    local tmp
+    tmp=$(mktemp -d)
+
+    if ! unzip -qo "$zip_path" -d "$tmp" 2>/dev/null; then
+        echo -e "${RED}✘ Failed to unzip${NC} $zip_path"
+        rm -rf "$tmp"
+        return 1
+    fi
+
+    local existing=0
+    if [ -d "$problem_dir/input" ]; then
+        existing=$(find "$problem_dir/input" -type f | wc -l | tr -d ' ')
+    fi
+
+    mkdir -p "$problem_dir/input" "$problem_dir/output"
+
+    local inputs=0 outputs=0
+    while IFS= read -r F; do
+        local NAME ID
+        NAME=$(basename "$F")
+        ID="${NAME%.*}"
+        case "$NAME" in
+            *.in)  cp "$F" "$problem_dir/input/$ID";  inputs=$((inputs + 1)) ;;
+            *.out) cp "$F" "$problem_dir/output/$ID"; outputs=$((outputs + 1)) ;;
+        esac
+    done < <(find "$tmp" -type f \( -name "*.in" -o -name "*.out" \))
+
+    rm -rf "$tmp"
+
+    if [ "$inputs" -eq 0 ]; then
+        echo -e "${RED}✘ No .in/.out files found${NC} in $zip_path"
+        return 1
+    fi
+
+    echo -e "${GREEN}✔${NC} $problem_dir ${GRAY}($inputs tests)${NC}"
+
+    if [ "$inputs" -ne "$outputs" ]; then
+        echo -e "  ${YELLOW}Warning: $inputs inputs but $outputs outputs${NC}"
+    fi
+
+    local remaining=$((existing - inputs))
+    if [ "$existing" -gt 0 ] && [ "$remaining" -gt 0 ]; then
+        echo -e "  ${YELLOW}Warning: $remaining pre-existing test files were kept${NC}"
+    fi
+}
+
 # Help command
 if [[ "$1" == "--help" || "$1" == "-h" ]]; then
     echo "Usage: icpc <command>"
     echo ""
     echo "Commands:"
-    echo "  run <year> <problem>  Run a specific problem"
-    echo "  run <year> all        Run all problems for a year"
-    echo "  run changed           Run only problems with git changes"
-    echo "  debug                 Manual input mode for the current problem"
-    echo "  --help, -h            Show this help message"
+    echo "  run <group> <problem>  Run a specific problem"
+    echo "  run <group> all        Run every problem of a group"
+    echo "  run all                Run every problem in the repository"
+    echo "  run changed            Run only problems with git changes"
+    echo "  debug                  Manual input mode for the current problem"
+    echo "  extract [problem]      Unpack tests.zip into input/ and output/"
+    echo "  --help, -h             Show this help message"
+    echo ""
+    echo "A problem is any directory holding a solution file, at any depth,"
+    echo "and its group is the directory above it:"
+    echo "  icpc run icpc/2024 A"
+    echo "  icpc run cses/introductory weird_algorithm"
+    echo ""
+    echo "To pull test data from CSES, open the problem while logged in,"
+    echo "download its tests.zip into the problem directory and run:"
+    echo "  icpc extract cses/introductory/weird_algorithm"
+    echo "  icpc extract   # unpacks every tests.zip found in the repository"
     exit 0
 fi
 
-# New debug command logic
+if [ "$1" = "extract" ]; then
+    ZIPS=()
+
+    if [ -n "$2" ]; then
+        TARGET="${2%/}"
+        if [ ! -f "$TARGET/tests.zip" ]; then
+            echo "Error: $TARGET/tests.zip not found"
+            exit 1
+        fi
+        ZIPS+=("$TARGET/tests.zip")
+    else
+        while IFS= read -r Z; do
+            ZIPS+=("$Z")
+        done < <(find . -name "tests.zip" | sed 's|^\./||' | sort)
+    fi
+
+    if [ ${#ZIPS[@]} -eq 0 ]; then
+        echo "No tests.zip found. Download one from CSES into a problem directory first."
+        exit 1
+    fi
+
+    FAILURES=0
+    for Z in "${ZIPS[@]}"; do
+        extract_tests "$Z" || FAILURES=$((FAILURES + 1))
+    done
+
+    [ "$FAILURES" -eq 0 ] || exit 1
+    exit 0
+fi
+
+# Debug command: manual input for the problem being worked on
 if [ "$1" = "debug" ]; then
     if ! git rev-parse --git-dir > /dev/null 2>&1; then
         echo "Error: not in a git repository!"
         exit 1
     fi
 
-    # Detects alphanumeric directory names (like TEST or 2025)
     DIR=$(git status --porcelain -uall | grep -v "^ D" | awk '{print $NF}' | while read -r F; do
-        if [[ "$F" =~ ^[^/]+/[^/]+/(solution\.(cpp|py)|input/|output/) ]]; then
-            echo "$F" | cut -d/ -f1,2
+        if P=$(problem_dir_of "$F"); then
+            echo "$P"
             break
         fi
     done)
@@ -46,17 +184,71 @@ if [ "$1" = "debug" ]; then
         exit 1
     fi
 
-    Y="${DIR%/*}"
-    P="${DIR#*/}"
-    
     export INTERACTIVE_MODE=1
-    bash "$RUNNER" "$Y" "$P"
+    run_problem_path "$DIR"
     exit 0
 fi
 
 if [ "$1" != "run" ]; then
-    echo "Usage: icpc run <YEAR> <PROBLEM|all> OR icpc run changed OR icpc debug"
+    echo "Usage: icpc run <GROUP> <PROBLEM|all> OR icpc run all OR icpc run changed OR icpc extract OR icpc debug"
     exit 1
+fi
+
+if [ "$2" = "all" ]; then
+    ALL_PROBLEMS=()
+    while IFS= read -r P; do
+        ALL_PROBLEMS+=("$P")
+    done < <(list_problems)
+
+    if [ ${#ALL_PROBLEMS[@]} -eq 0 ]; then
+        echo "No problems found in $ROOT_DIR"
+        exit 1
+    fi
+
+    echo -e "${CYAN}Running ${#ALL_PROBLEMS[@]} problems${NC}\n"
+
+    # Only the reports written from now on belong to this run
+    STAMP=$(mktemp)
+
+    for P in "${ALL_PROBLEMS[@]}"; do
+        run_problem_path "$P"
+    done
+
+    TOTAL_AC=0; TOTAL_WA=0; TOTAL_TLE=0; SOLVED=0; PROBLEMS=0
+    FAILED=()
+
+    while IFS= read -r REPORT; do
+        AC=$(sed -n 's/.*"ac": \([0-9]*\).*/\1/p' "$REPORT")
+        WA=$(sed -n 's/.*"wa": \([0-9]*\).*/\1/p' "$REPORT")
+        TLE=$(sed -n 's/.*"tle": \([0-9]*\).*/\1/p' "$REPORT")
+
+        TOTAL_AC=$((TOTAL_AC + AC))
+        TOTAL_WA=$((TOTAL_WA + WA))
+        TOTAL_TLE=$((TOTAL_TLE + TLE))
+        PROBLEMS=$((PROBLEMS + 1))
+
+        NAME=$(dirname "$REPORT" | sed 's|^\./||')
+        if [ $((WA + TLE)) -eq 0 ]; then
+            SOLVED=$((SOLVED + 1))
+        else
+            FAILED+=("$NAME (WA=$WA TLE=$TLE)")
+        fi
+    done < <(find . -name last_run.json -newer "$STAMP" | sort)
+
+    rm -f "$STAMP"
+
+    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${CYAN} Overall summary${NC}"
+    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "Problems: ${GREEN}$SOLVED${NC} of $PROBLEMS fully passing"
+    echo -e "Tests: AC=$TOTAL_AC WA=$TOTAL_WA TLE=$TOTAL_TLE"
+
+    if [ ${#FAILED[@]} -gt 0 ]; then
+        echo -e "\n${RED}Problems with failures:${NC}"
+        printf "${GRAY}  - %s${NC}\n" "${FAILED[@]}"
+    fi
+
+    exit 0
 fi
 
 if [ "$2" = "changed" ]; then
@@ -69,11 +261,8 @@ if [ "$2" = "changed" ]; then
 
     # Detect modified AND untracked files
     git status --porcelain -uall | grep -v "^ D" | awk '{print $NF}' | while read -r F; do
-        if [[ "$F" =~ ^[^/]+/[^/]+/(solution\.(cpp|py)|input/|output/) ]]; then
-            DIR=$(echo "$F" | cut -d/ -f1,2)
-            if [ -f "$DIR/solution.cpp" ] || [ -f "$DIR/solution.py" ]; then
-                echo "$DIR" >> "$TMP_LIST"
-            fi
+        if P=$(problem_dir_of "$F"); then
+            echo "$P" >> "$TMP_LIST"
         fi
     done
 
@@ -89,15 +278,13 @@ if [ "$2" = "changed" ]; then
     echo ""
 
     while read -r LINE; do
-        Y="${LINE%/*}"
-        P="${LINE#*/}"
-        bash "$RUNNER" "$Y" "$P"
+        run_problem_path "$LINE"
     done < "${TMP_LIST}.uniq"
 
     rm -f "$TMP_LIST" "${TMP_LIST}.uniq"
 else
     if [ -z "$2" ] || [ -z "$3" ]; then
-        echo "Usage: icpc run <YEAR> <PROBLEM|all>"
+        echo "Usage: icpc run <GROUP> <PROBLEM|all>"
         exit 1
     fi
     bash "$RUNNER" "$2" "$3"

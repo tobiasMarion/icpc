@@ -38,3 +38,14 @@ __pycache__/
 .DS_Store
 .idea/
 .vscode/
+
+# =========================
+# CSES test data archives
+# =========================
+tests.zip
+**/tests.zip
+
+# =========================
+# Agent / editor local config
+# =========================
+.claude/
