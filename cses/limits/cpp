@@ -1,0 +1,12 @@
+#!/bin/bash
+# Default time limit for CSES problems (applies to every problem under cses/
+# unless the problem defines its own cses/<problem>/limits/cpp).
+# CSES uses the same limit for all languages, usually 1 second.
+echo 1
+# number of repetitions to run within the given timelimit
+echo 10
+# maximum amount of memory per repetition (in Mbytes)
+echo 512
+# maximum file size (in kbytes)
+echo 1024
+exit 0
