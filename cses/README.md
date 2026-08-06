@@ -35,3 +35,4 @@ judge. A problem that needs a different limit can define its own `limits/`.
 | Introductory | 2 | [Missing Number](https://cses.fi/problemset/task/1083) | ✅ | Math | O(n) | Sum of 1..n minus the sum of the input |
 | Introductory | 3 | [Repetitions](https://cses.fi/problemset/task/1069) | ✅ | Single pass | O(n) | Track the longest run while scanning; comparing only when the letter changes misses the run that ends the string |
 | Introductory | 4 | [Increasing Array](https://cses.fi/problemset/task/1094) | ✅ | Greedy | O(n) | Raise every element to the previous one when it is smaller; the total can exceed 32 bits, so C++ needs `long long` |
+| Introductory | 5 | [Permutations](https://cses.fi/problemset/task/1070) | ✅ | Construction | O(n) | Print the even numbers and then the odd ones; `n = 2` and `n = 3` have no solution, while `n = 1` does |
